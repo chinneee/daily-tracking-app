@@ -1,5 +1,6 @@
-pandas
 streamlit
+pandas
 gspread
+oauth2client
 gspread_dataframe
 google-auth
