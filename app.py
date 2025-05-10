@@ -5,6 +5,7 @@ from io import BytesIO
 import gspread
 from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
+import json
 
 # ===== FUNCTION DEFINITIONS =====
 
@@ -31,11 +32,14 @@ def load_and_clean_reports(br_file, ads_file, date_str):
     merged["Date"] = merged.pop("Date")
     return merged
 
-def export_to_gsheet(df, sheet_id, credential_json, worksheet_name, start_row):
+def export_to_gsheet(df, sheet_id, credential_json, worksheet_name):
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(credential_json, scopes=scopes)
     client = gspread.authorize(creds)
     worksheet = client.open_by_key(sheet_id).worksheet(worksheet_name)
+    
+    # Detect next empty row
+    start_row = len(worksheet.get_all_values()) + 1
     set_with_dataframe(worksheet, df, row=start_row, include_column_header=False)
 
 # ===== STREAMLIT UI =====
@@ -59,23 +63,21 @@ if br_file and ads_file and date_input:
         st.download_button("📥 Download Merged Excel", buffer.getvalue(), file_name="merged_daily_summary.xlsx")
 
         if st.checkbox("📤 Push to Google Sheets"):
-            start_date = st.date_input("Start Date")
-            end_date = st.date_input("End Date")
-            start_row = st.number_input("Start Row in Sheet", min_value=1, step=1)
             uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON", type="json")
 
             if uploaded_cred:
-                credential_json = uploaded_cred.read()
-                import json
-                cred_dict = json.loads(credential_json)
+                cred_dict = json.loads(uploaded_cred.read())
+                
+                # Auto get min/max date from merged_df
+                start_date = merged_df['Date'].min()
+                end_date = merged_df['Date'].max()
 
-                filtered_df = merged_df[(merged_df['Date'] >= pd.to_datetime(start_date)) &
-                                        (merged_df['Date'] <= pd.to_datetime(end_date))]
+                filtered_df = merged_df[(merged_df['Date'] >= start_date) & (merged_df['Date'] <= end_date)]
                 df_final = filtered_df[['Child_ASIN', 'Sessions', 'Units_Ordered', 'Clicks_Ads', 'Spend_Ads', 'Date']].sort_values(['Date', 'Child_ASIN'])
 
                 try:
-                    export_to_gsheet(df_final, "18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", cred_dict, "DAILY_TH", int(start_row))
-                    st.success("✅ Data pushed to Google Sheets successfully!")
+                    export_to_gsheet(df_final, "18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", cred_dict, "DAILY_TH")
+                    st.success(f"✅ Data pushed to Google Sheets from {start_date.date()} to {end_date.date()}!")
                 except Exception as e:
                     st.error(f"❌ Failed to push to Google Sheets: {e}")
     except Exception as e:
