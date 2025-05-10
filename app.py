@@ -10,6 +10,7 @@ from google.oauth2.service_account import Credentials
 
 def add_date_column(df, date_str):
     df['Date'] = pd.to_datetime(date_str, format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
     cols = [col for col in df.columns if col != 'Date'] + ['Date']
     return df[cols]
 
