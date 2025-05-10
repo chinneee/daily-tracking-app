@@ -65,10 +65,11 @@ if br_file and ads_file and date_input:
                 import json
                 cred_dict = json.loads(credential_json)
 
-                filtered_df = merged_df[(merged_df['Date'] >= pd.to_datetime(start_date)) &
-                                        (merged_df['Date'] <= pd.to_datetime(end_date))]
+                filtered_df = merged_df[(merged_df['Date'] >= pd.to_datetime(start_date)).dt.date &
+                                        (merged_df['Date'] <= pd.to_datetime(end_date)).dt.date]
                 df_final = filtered_df[['Child_ASIN', 'Sessions', 'Units_Ordered', 'Clicks_Ads', 'Spend_Ads', 'Date']].sort_values(['Date', 'Child_ASIN'])
-
+                df_final['Session'] = df_final['Sessions'].astype(int)
+                df_final['Units_Ordered'] = df_final['Units_Ordered'].astype(int)
                 try:
                     export_to_gsheet(df_final, "18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", cred_dict, "DAILY_TH", int(start_row))
                     st.success("✅ Data pushed to Google Sheets successfully!")
