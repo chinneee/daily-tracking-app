@@ -69,8 +69,8 @@ if br_file and ads_file and date_input:
                 import json
                 cred_dict = json.loads(credential_json)
 
-                filtered_df = merged_df[(merged_df['Date'] >= pd.to_datetime(start_date)).dt.date &
-                                        (merged_df['Date'] <= pd.to_datetime(end_date)).dt.date]
+                filtered_df = merged_df[(merged_df['Date'] >= pd.to_datetime(start_date)) &
+                                        (merged_df['Date'] <= pd.to_datetime(end_date))]
                 df_final = filtered_df[['Child_ASIN', 'Sessions', 'Units_Ordered', 'Clicks_Ads', 'Spend_Ads', 'Date']].sort_values(['Date', 'Child_ASIN'])
 
                 try:
