@@ -71,6 +71,10 @@ if br_file and ads_file and date_input:
                 df_final = filtered_df[['Child_ASIN', 'Sessions', 'Units_Ordered', 'Clicks_Ads', 'Spend_Ads', 'Date']].sort_values(['Date', 'Child_ASIN'])
                 # Bỏ dâu phẩy trong cột Sessions và Units_Ordered
                 df_final['Sessions'] = df_final['Sessions'].astype(str).str.replace(',', '')
+                df_final['Units_Ordered'] = df_final['Units_Ordered'].astype(str).str.replace(',', '')
+                # Chuyển đổi kiểu dữ liệu về số nguyên
+                df_final['Sessions'] = pd.to_numeric(df_final['Sessions'], errors='coerce').fillna(0).astype(int)
+                df_final['Units_Ordered'] = pd.to_numeric(df_final['Units_Ordered'], errors='coerce').fillna(0).astype(int)
                 try:
                     export_to_gsheet(df_final, "18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", cred_dict, "DAILY_TH", int(start_row))
                     st.success("✅ Data pushed to Google Sheets successfully!")
